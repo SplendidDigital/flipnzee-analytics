@@ -55,3 +55,44 @@ add_shortcode('flipnzee_verified_badge', function () {
 <?php
     return ob_get_clean();
 });
+
+
+
+add_action('admin_menu', function () {
+add_menu_page(
+'Flipnzee Analytics',
+'Flipnzee Analytics',
+'manage_options',
+'flipnzee-analytics',
+'flipnzee_analytics_settings_page'
+);
+});
+
+function flipnzee_analytics_settings_page() {
+
+```
+if (isset($_POST['flipnzee_token'])) {
+    update_option('flipnzee_ga_token', [
+        'access_token' => sanitize_text_field($_POST['flipnzee_token'])
+    ]);
+    echo '<div class="updated"><p>Token Saved</p></div>';
+}
+
+?>
+<div class="wrap">
+    <h1>Flipnzee Analytics</h1>
+
+    <form method="post">
+        <label>Google Access Token</label><br><br>
+
+        <input type="text" name="flipnzee_token" style="width:500px;" />
+
+        <br><br>
+        <button type="submit" class="button button-primary">Save Token</button>
+    </form>
+</div>
+<?php
+```
+
+}
+
