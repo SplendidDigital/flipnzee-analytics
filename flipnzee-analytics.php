@@ -310,8 +310,11 @@ function flipnzee_ga_meta_box_callback($post) {
 
 // ================== SAVE META ==================
 
+// ================== SAVE META ==================
+
 add_action('save_post', function ($post_id) {
 
+    // Security checks
     if (!isset($_POST['flipnzee_meta_nonce'])) {
         return;
     }
@@ -336,27 +339,48 @@ add_action('save_post', function ($post_id) {
         return;
     }
 
+    // Only for listing post type
+    if (get_post_type($post_id) !== 'listing') {
+        return;
+    }
+
+
+    // ================= SAVE PROPERTY ID =================
 
     if (isset($_POST['ga_property_id'])) {
+
+        $property_id = sanitize_text_field(
+            $_POST['ga_property_id']
+        );
 
         update_post_meta(
             $post_id,
             '_ga_property_id',
-            sanitize_text_field(
-                $_POST['ga_property_id']
-            )
+            $property_id
         );
     }
 
 
+    // ================= SAVE DOMAIN =================
+
     if (isset($_POST['ga_domain'])) {
+
+        $domain = sanitize_text_field(
+            $_POST['ga_domain']
+        );
 
         update_post_meta(
             $post_id,
             '_ga_domain',
-            sanitize_text_field(
-                $_POST['ga_domain']
-            )
+            $domain
         );
     }
+
+
+    // ================= CLEAR OLD TRANSIENTS =================
+
+    delete_transient("flipnzee_main_{$post_id}");
+
+    delete_transient("flipnzee_meta_{$post_id}");
+
 });

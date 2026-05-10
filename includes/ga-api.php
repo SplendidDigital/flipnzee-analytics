@@ -1,39 +1,52 @@
 <?php
 
 // ================== EMPTY RESPONSE ==================
+
 function flipnzee_empty_response() {
+
     return [
         'users'          => 0,
         'sessions'       => 0,
         'trend_percent'  => 0,
         'trend_label'    => '→',
         'user_diff'      => 0,
-        'updated'        => 0
+        'updated'        => time()
     ];
 }
 
 
+
 // ================== GET ACCESS TOKEN ==================
+
 function flipnzee_get_access_token() {
 
     $token = get_option('flipnzee_ga_token');
 
-    if (!$token) {
+    if (!$token || !is_array($token)) {
         return false;
     }
 
     if (empty($token['created'])) {
+
         $token['created'] = time();
-        update_option('flipnzee_ga_token', $token);
+
+        update_option(
+            'flipnzee_ga_token',
+            $token
+        );
     }
 
     $access_token  = $token['access_token'] ?? '';
     $refresh_token = $token['refresh_token'] ?? '';
-    $expires_in    = $token['expires_in'] ?? 0;
-    $created       = $token['created'] ?? 0;
+    $expires_in    = intval($token['expires_in'] ?? 0);
+    $created       = intval($token['created'] ?? 0);
 
-    // Refresh expired token
-    if (time() > ($created + $expires_in - 60) && !empty($refresh_token)) {
+
+    // ---------- REFRESH TOKEN ----------
+    if (
+        time() > ($created + $expires_in - 60)
+        && !empty($refresh_token)
+    ) {
 
         $response = wp_remote_post(
             'https://oauth2.googleapis.com/token',
@@ -48,29 +61,69 @@ function flipnzee_get_access_token() {
         );
 
         if (is_wp_error($response)) {
+
+            error_log(
+                'FLIPNZEE TOKEN ERROR: ' .
+                $response->get_error_message()
+            );
+
             return false;
         }
 
-        $body = json_decode(wp_remote_retrieve_body($response), true);
+        $body = json_decode(
+            wp_remote_retrieve_body($response),
+            true
+        );
 
         if (!empty($body['access_token'])) {
 
             $token['access_token'] = $body['access_token'];
-            $token['expires_in']   = $body['expires_in'] ?? 3600;
-            $token['created']      = time();
 
-            update_option('flipnzee_ga_token', $token);
+            $token['expires_in'] = intval(
+                $body['expires_in'] ?? 3600
+            );
+
+            $token['created'] = time();
+
+            update_option(
+                'flipnzee_ga_token',
+                $token
+            );
 
             return $body['access_token'];
         }
+
+        error_log(
+            'FLIPNZEE REFRESH FAILED: ' .
+            print_r($body, true)
+        );
+
+        return false;
     }
 
     return $access_token;
 }
 
 
+
+
 // ================== FETCH MAIN ==================
+
 function flipnzee_fetch_and_store($property_id, $post_id) {
+
+    $property_id = trim($property_id);
+    $post_id     = intval($post_id);
+
+    if (empty($property_id) || !$post_id) {
+        return;
+    }
+
+    error_log(
+        'FLIPNZEE FETCH MAIN | PROPERTY: ' .
+        $property_id .
+        ' | POST: ' .
+        $post_id
+    );
 
     $access_token = flipnzee_get_access_token();
 
@@ -85,10 +138,12 @@ function flipnzee_fetch_and_store($property_id, $post_id) {
         return;
     }
 
-    $endpoint = "https://analyticsdata.googleapis.com/v1beta/properties/{$property_id}:runReport";
+    $endpoint =
+        "https://analyticsdata.googleapis.com/v1beta/properties/{$property_id}:runReport";
 
 
-    // ---------- CURRENT PERIOD ----------
+    // ================= CURRENT PERIOD =================
+
     $response_current = wp_remote_post(
         $endpoint,
         [
@@ -96,13 +151,16 @@ function flipnzee_fetch_and_store($property_id, $post_id) {
                 'Authorization' => 'Bearer ' . $access_token,
                 'Content-Type'  => 'application/json'
             ],
+
             'body' => wp_json_encode([
+
                 'dateRanges' => [
                     [
                         'startDate' => '30daysAgo',
                         'endDate'   => 'today'
                     ]
                 ],
+
                 'metrics' => [
                     ['name' => 'activeUsers'],
                     ['name' => 'sessions']
@@ -111,23 +169,59 @@ function flipnzee_fetch_and_store($property_id, $post_id) {
         ]
     );
 
+
     if (is_wp_error($response_current)) {
+
+        error_log(
+            'FLIPNZEE CURRENT FETCH ERROR: ' .
+            $response_current->get_error_message()
+        );
+
         return;
     }
+
 
     $data_current = json_decode(
         wp_remote_retrieve_body($response_current),
         true
     );
 
-    $users = intval($data_current['rows'][0]['metricValues'][0]['value'] ?? 0);
+
+    error_log(
+        'FLIPNZEE CURRENT RESPONSE: ' .
+        print_r($data_current, true)
+    );
+
+
+    if (!empty($data_current['error'])) {
+
+        error_log(
+            'FLIPNZEE GA ERROR: ' .
+            print_r($data_current['error'], true)
+        );
+
+        set_transient(
+            "flipnzee_main_{$post_id}",
+            flipnzee_empty_response(),
+            HOUR_IN_SECONDS
+        );
+
+        return;
+    }
+
+
+    $users = intval(
+        $data_current['rows'][0]['metricValues'][0]['value'] ?? 0
+    );
 
     $sessions = intval(
         $data_current['rows'][0]['metricValues'][1]['value'] ?? 0
     );
 
 
-    // ---------- PREVIOUS PERIOD ----------
+
+    // ================= PREVIOUS PERIOD =================
+
     $response_previous = wp_remote_post(
         $endpoint,
         [
@@ -135,13 +229,16 @@ function flipnzee_fetch_and_store($property_id, $post_id) {
                 'Authorization' => 'Bearer ' . $access_token,
                 'Content-Type'  => 'application/json'
             ],
+
             'body' => wp_json_encode([
+
                 'dateRanges' => [
                     [
                         'startDate' => '60daysAgo',
                         'endDate'   => '30daysAgo'
                     ]
                 ],
+
                 'metrics' => [
                     ['name' => 'activeUsers']
                 ]
@@ -149,27 +246,57 @@ function flipnzee_fetch_and_store($property_id, $post_id) {
         ]
     );
 
+
     if (is_wp_error($response_previous)) {
+
+        error_log(
+            'FLIPNZEE PREVIOUS FETCH ERROR: ' .
+            $response_previous->get_error_message()
+        );
+
         return;
     }
+
 
     $data_previous = json_decode(
         wp_remote_retrieve_body($response_previous),
         true
     );
 
+
+    if (!empty($data_previous['error'])) {
+
+        error_log(
+            'FLIPNZEE PREVIOUS ERROR: ' .
+            print_r($data_previous['error'], true)
+        );
+
+        return;
+    }
+
+
     $previous_users = intval(
         $data_previous['rows'][0]['metricValues'][0]['value'] ?? 0
     );
 
+
     $trend_percent = $previous_users > 0
-        ? round((($users - $previous_users) / $previous_users) * 100)
+        ? round(
+            (
+                ($users - $previous_users)
+                / $previous_users
+            ) * 100
+        )
         : 0;
+
 
     $trend_label = $trend_percent > 0
         ? '↑'
         : ($trend_percent < 0 ? '↓' : '→');
 
+
+
+    // ================= SAVE TRANSIENT =================
 
     set_transient(
         "flipnzee_main_{$post_id}",
@@ -186,8 +313,25 @@ function flipnzee_fetch_and_store($property_id, $post_id) {
 }
 
 
+
+
 // ================== FETCH INSIGHTS ==================
+
 function flipnzee_fetch_insights($property_id, $post_id) {
+
+    $property_id = trim($property_id);
+    $post_id     = intval($post_id);
+
+    if (empty($property_id) || !$post_id) {
+        return;
+    }
+
+    error_log(
+        'FLIPNZEE FETCH META | PROPERTY: ' .
+        $property_id .
+        ' | POST: ' .
+        $post_id
+    );
 
     $access_token = flipnzee_get_access_token();
 
@@ -195,10 +339,13 @@ function flipnzee_fetch_insights($property_id, $post_id) {
         return;
     }
 
-    $endpoint = "https://analyticsdata.googleapis.com/v1beta/properties/{$property_id}:runReport";
+    $endpoint =
+        "https://analyticsdata.googleapis.com/v1beta/properties/{$property_id}:runReport";
 
 
-    // ---------- COUNTRIES ----------
+
+    // ================= COUNTRIES =================
+
     $countries = [];
 
     $response = wp_remote_post(
@@ -208,51 +355,71 @@ function flipnzee_fetch_insights($property_id, $post_id) {
                 'Authorization' => 'Bearer ' . $access_token,
                 'Content-Type'  => 'application/json'
             ],
+
             'body' => wp_json_encode([
+
                 'dateRanges' => [
                     [
                         'startDate' => '30daysAgo',
                         'endDate'   => 'today'
                     ]
                 ],
+
                 'dimensions' => [
                     ['name' => 'country']
                 ],
+
                 'metrics' => [
                     ['name' => 'activeUsers']
                 ],
+
                 'limit' => 10
             ])
         ]
     );
 
-    $data = json_decode(wp_remote_retrieve_body($response), true);
 
-    $total = 0;
-    $map   = [];
+    if (!is_wp_error($response)) {
 
-    foreach ($data['rows'] ?? [] as $row) {
+        $data = json_decode(
+            wp_remote_retrieve_body($response),
+            true
+        );
 
-        $name  = $row['dimensionValues'][0]['value'] ?? 'Unknown';
-        $value = intval($row['metricValues'][0]['value']);
+        if (empty($data['error'])) {
 
-        $map[$name] = ($map[$name] ?? 0) + $value;
+            $total = 0;
+            $map   = [];
 
-        $total += $value;
+            foreach ($data['rows'] ?? [] as $row) {
+
+                $name = $row['dimensionValues'][0]['value'] ?? 'Unknown';
+
+                $value = intval(
+                    $row['metricValues'][0]['value'] ?? 0
+                );
+
+                $map[$name] = ($map[$name] ?? 0) + $value;
+
+                $total += $value;
+            }
+
+            foreach ($map as $name => $value) {
+
+                $countries[] = [
+                    'name'    => $name,
+                    'percent' => $total > 0
+                        ? round(($value / $total) * 100)
+                        : 0
+                ];
+            }
+        }
     }
 
-    foreach ($map as $name => $value) {
-
-        $countries[] = [
-            'name'    => $name,
-            'percent' => $total > 0
-                ? round(($value / $total) * 100)
-                : 0
-        ];
-    }
 
 
-    // ---------- SOURCES ----------
+    // ================= SOURCES =================
+
     $sources = [];
 
     $response = wp_remote_post(
@@ -262,23 +429,29 @@ function flipnzee_fetch_insights($property_id, $post_id) {
                 'Authorization' => 'Bearer ' . $access_token,
                 'Content-Type'  => 'application/json'
             ],
+
             'body' => wp_json_encode([
+
                 'dateRanges' => [
                     [
                         'startDate' => '30daysAgo',
                         'endDate'   => 'today'
                     ]
                 ],
+
                 'dimensions' => [
                     ['name' => 'sessionDefaultChannelGroup']
                 ],
+
                 'metrics' => [
                     ['name' => 'sessions']
                 ],
+
                 'limit' => 5
             ])
         ]
     );
+
 
     if (!is_wp_error($response)) {
 
@@ -287,86 +460,131 @@ function flipnzee_fetch_insights($property_id, $post_id) {
             true
         );
 
-        $total = 0;
+        if (empty($data['error'])) {
 
-        foreach ($data['rows'] ?? [] as $row) {
+            $total = 0;
 
-            $value = intval($row['metricValues'][0]['value']);
+            foreach ($data['rows'] ?? [] as $row) {
 
-            $sources[] = [
-                'name'  => $row['dimensionValues'][0]['value'],
-                'value' => $value
-            ];
+                $value = intval(
+                    $row['metricValues'][0]['value'] ?? 0
+                );
 
-            $total += $value;
-        }
+                $sources[] = [
+                    'name'  => $row['dimensionValues'][0]['value'] ?? '',
+                    'value' => $value
+                ];
 
-        foreach ($sources as &$s) {
+                $total += $value;
+            }
 
-            $s['percent'] = $total > 0
-                ? round(($s['value'] / $total) * 100)
-                : 0;
+            foreach ($sources as &$s) {
+
+                $s['percent'] = $total > 0
+                    ? round(($s['value'] / $total) * 100)
+                    : 0;
+            }
         }
     }
 
 
-    // ---------- KEYWORDS ----------
+
+    // ================= KEYWORDS =================
+
     $keywords = [];
 
-    $site_url = get_post_meta($post_id, '_ga_domain', true);
+    $site_url = get_post_meta(
+        $post_id,
+        '_ga_domain',
+        true
+    );
 
     if ($site_url) {
 
-        // NORMALIZATION FIX
-        $domain = preg_replace('#^https?://#', '', trim($site_url));
+        $domain = preg_replace(
+            '#^https?://#',
+            '',
+            trim($site_url)
+        );
+
         $domain = rtrim($domain, '/');
 
+
         $variants = [
-            'sc-domain:' . $domain,
             'https://' . $domain . '/',
+            'sc-domain:' . $domain,
             'http://' . $domain . '/'
         ];
 
+
         foreach ($variants as $site_for_api) {
 
-            error_log('SC TRY: ' . $site_for_api);
+            error_log(
+                'FLIPNZEE SC TRY: ' .
+                $site_for_api
+            );
 
             $response = wp_remote_post(
                 'https://searchconsole.googleapis.com/webmasters/v3/sites/' .
                 urlencode($site_for_api) .
                 '/searchAnalytics/query',
+
                 [
                     'headers' => [
                         'Authorization' => 'Bearer ' . $access_token,
                         'Content-Type'  => 'application/json'
                     ],
+
                     'body' => wp_json_encode([
-                        'startDate' => date('Y-m-d', strtotime('-30 days')),
-                        'endDate'   => date('Y-m-d'),
+
+                        'startDate' => date(
+                            'Y-m-d',
+                            strtotime('-30 days')
+                        ),
+
+                        'endDate' => date('Y-m-d'),
+
                         'dimensions' => ['query'],
-                        'rowLimit'   => 10,
+
+                        'rowLimit' => 10,
+
                         'searchType' => 'web'
                     ])
                 ]
             );
 
+
             if (is_wp_error($response)) {
                 continue;
             }
 
-            $raw  = wp_remote_retrieve_body($response);
+
+            $raw = wp_remote_retrieve_body($response);
+
             $data = json_decode($raw, true);
 
-            error_log('SC RESPONSE: ' . $raw);
+
+            error_log(
+                'FLIPNZEE SC RESPONSE: ' .
+                $raw
+            );
+
 
             if (!empty($data['rows'])) {
 
                 foreach ($data['rows'] as $row) {
 
                     $keywords[] = [
-                        'query'    => $row['keys'][0] ?? '',
-                        'clicks'   => intval($row['clicks'] ?? 0),
-                        'position' => round($row['position'] ?? 0, 1)
+                        'query' => $row['keys'][0] ?? '',
+
+                        'clicks' => intval(
+                            $row['clicks'] ?? 0
+                        ),
+
+                        'position' => round(
+                            $row['position'] ?? 0,
+                            1
+                        )
                     ];
                 }
 
@@ -375,6 +593,9 @@ function flipnzee_fetch_insights($property_id, $post_id) {
         }
     }
 
+
+
+    // ================= SAVE META =================
 
     set_transient(
         "flipnzee_meta_{$post_id}",

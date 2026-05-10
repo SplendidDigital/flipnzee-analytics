@@ -1,12 +1,27 @@
+// ================= HELPERS =================
+
+
 <?php
 
 // ================= HELPERS =================
 
 function flipnzee_get_stats($post_id) {
 
-    $stats = get_transient("flipnzee_main_{$post_id}");
+    // Force integer safety
+    $post_id = intval($post_id);
 
-    if (!$stats || empty($stats['users'])) {
+    if (!$post_id) {
+        return flipnzee_empty_response();
+    }
+
+    // Unique transient key
+    $cache_key = "flipnzee_main_{$post_id}";
+
+    $stats = get_transient($cache_key);
+
+    // ONLY fetch if transient truly missing
+    // (not when users = 0)
+    if ($stats === false) {
 
         $property_id = get_post_meta(
             $post_id,
@@ -14,15 +29,23 @@ function flipnzee_get_stats($post_id) {
             true
         );
 
-        if ($property_id) {
+        $property_id = trim($property_id);
 
-            flipnzee_fetch_and_store($property_id, $post_id);
+        if (!empty($property_id)) {
 
-            $stats = get_transient("flipnzee_main_{$post_id}");
+            // Fresh fetch
+            flipnzee_fetch_and_store(
+                $property_id,
+                $post_id
+            );
+
+            // Reload transient after fetch
+            $stats = get_transient($cache_key);
         }
     }
 
-    if (!$stats) {
+    // Final fallback
+    if (!$stats || !is_array($stats)) {
 
         return [
             'users'         => 0,
@@ -38,11 +61,23 @@ function flipnzee_get_stats($post_id) {
 }
 
 
+
 function flipnzee_get_meta($post_id) {
 
-    $meta = get_transient("flipnzee_meta_{$post_id}");
+    // Force integer safety
+    $post_id = intval($post_id);
 
-    if (!$meta) {
+    if (!$post_id) {
+        return [];
+    }
+
+    // Unique transient key
+    $cache_key = "flipnzee_meta_{$post_id}";
+
+    $meta = get_transient($cache_key);
+
+    // ONLY fetch if transient missing
+    if ($meta === false) {
 
         $property_id = get_post_meta(
             $post_id,
@@ -50,16 +85,33 @@ function flipnzee_get_meta($post_id) {
             true
         );
 
-        if ($property_id) {
+        $property_id = trim($property_id);
 
-            flipnzee_fetch_insights($property_id, $post_id);
+        if (!empty($property_id)) {
 
-            $meta = get_transient("flipnzee_meta_{$post_id}");
+            flipnzee_fetch_insights(
+                $property_id,
+                $post_id
+            );
+
+            // Reload transient
+            $meta = get_transient($cache_key);
         }
     }
 
-    return $meta ?: [];
+    // Safety fallback
+    if (!$meta || !is_array($meta)) {
+
+        return [
+            'countries' => [],
+            'sources'   => [],
+            'keywords'  => []
+        ];
+    }
+
+    return $meta;
 }
+
 
 
 function flipnzee_clean_source_name($name) {
@@ -75,6 +127,7 @@ function flipnzee_clean_source_name($name) {
 
     return $map[$name] ?? $name;
 }
+
 
 
 // ================= VERIFIED DASHBOARD =================
