@@ -25,7 +25,8 @@ define(
 
 require_once plugin_dir_path(__FILE__) . 'includes/ga-api.php';
 require_once plugin_dir_path(__FILE__) . 'includes/shortcodes.php';
-require_once plugin_dir_path(__FILE__) . 'includes/admin-page.php';
+require_once plugin_dir_path(__FILE__) . 'includes/admin/menu.php';
+require_once plugin_dir_path(__FILE__) . 'includes/admin/settings-page.php';
 
 // ================== FRONTEND ASSETS ==================
 
