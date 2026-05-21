@@ -1,3 +1,4 @@
+```php
 <?php
 
 // ================== EMPTY RESPONSE ==================
@@ -42,7 +43,7 @@ function flipnzee_get_access_token() {
     $created       = intval($token['created'] ?? 0);
 
 
-    // ---------- REFRESH TOKEN ----------
+    // ================= REFRESH TOKEN =================
 
     if (
         time() > ($created + $expires_in - 60)
@@ -57,7 +58,9 @@ function flipnzee_get_access_token() {
                     'client_secret' => get_option('flipnzee_client_secret'),
                     'refresh_token' => $refresh_token,
                     'grant_type'    => 'refresh_token'
-                ]
+                ],
+
+                'timeout' => 20
             ]
         );
 
@@ -147,7 +150,9 @@ function flipnzee_google_post($endpoint, $body) {
 
         error_log(
             'FLIPNZEE HTTP ERROR: ' .
-            $status
+            $status .
+            ' | RESPONSE: ' .
+            wp_remote_retrieve_body($response)
         );
 
         return false;
@@ -194,6 +199,7 @@ function flipnzee_fetch_and_store($property_id, $post_id) {
 
     $endpoint =
         "https://analyticsdata.googleapis.com/v1beta/properties/{$property_id}:runReport";
+
 
 
     // ================= CURRENT PERIOD =================
@@ -247,6 +253,25 @@ function flipnzee_fetch_and_store($property_id, $post_id) {
         return;
     }
 
+    if (
+        empty($data_current['rows']) ||
+        !isset($data_current['rows'][0]['metricValues'][0]['value'])
+    ) {
+
+        error_log(
+            'FLIPNZEE ERROR: Invalid GA response for property ID: ' .
+            $property_id
+        );
+
+        set_transient(
+            "flipnzee_main_{$post_id}",
+            flipnzee_empty_response(),
+            HOUR_IN_SECONDS
+        );
+
+        return;
+    }
+
     $users = intval(
         $data_current['rows'][0]['metricValues'][0]['value'] ?? 0
     );
@@ -260,40 +285,61 @@ function flipnzee_fetch_and_store($property_id, $post_id) {
     // ================= PREVIOUS PERIOD =================
 
     $data_previous = flipnzee_google_post(
-    $endpoint,
-    [
-        'dateRanges' => [
-            [
-                'startDate' => '60daysAgo',
-                'endDate'   => '30daysAgo'
+        $endpoint,
+        [
+            'dateRanges' => [
+                [
+                    'startDate' => '60daysAgo',
+                    'endDate'   => '30daysAgo'
+                ]
+            ],
+
+            'metrics' => [
+                ['name' => 'activeUsers']
             ]
-        ],
-
-        'metrics' => [
-            ['name' => 'activeUsers']
         ]
-    ]
-);
+    );
 
-if (!$data_previous) {
-    return;
-}
+    if (!$data_previous) {
 
-   
+        error_log(
+            'FLIPNZEE PREVIOUS REQUEST FAILED: ' .
+            $property_id
+        );
 
-    if (!empty($data_previous['error'])) {
+        $previous_users = 0;
+
+    } elseif (!empty($data_previous['error'])) {
 
         error_log(
             'FLIPNZEE PREVIOUS ERROR: ' .
             print_r($data_previous['error'], true)
         );
 
-        return;
+        $previous_users = 0;
+
+    } elseif (
+        empty($data_previous['rows']) ||
+        !isset($data_previous['rows'][0]['metricValues'][0]['value'])
+    ) {
+
+        error_log(
+            'FLIPNZEE PREVIOUS DATA ERROR: ' .
+            $property_id
+        );
+
+        $previous_users = 0;
+
+    } else {
+
+        $previous_users = intval(
+            $data_previous['rows'][0]['metricValues'][0]['value']
+        );
     }
 
-    $previous_users = intval(
-        $data_previous['rows'][0]['metricValues'][0]['value'] ?? 0
-    );
+
+
+    // ================= TREND =================
 
     $trend_percent = $previous_users > 0
         ? round(
@@ -310,7 +356,7 @@ if (!$data_previous) {
 
 
 
-    // ================= SAVE TRANSIENT =================
+    // ================= SAVE =================
 
     set_transient(
         "flipnzee_main_{$post_id}",
@@ -388,43 +434,50 @@ function flipnzee_fetch_insights($property_id, $post_id) {
                 ],
 
                 'limit' => 10
-            ])
+            ]),
+
+            'timeout' => 20
         ]
     );
 
     if (!is_wp_error($response)) {
 
-        $data = json_decode(
-            wp_remote_retrieve_body($response),
-            true
-        );
+        $status = wp_remote_retrieve_response_code($response);
 
-        if (empty($data['error'])) {
+        if ($status === 200) {
 
-            $total = 0;
-            $map   = [];
+            $data = json_decode(
+                wp_remote_retrieve_body($response),
+                true
+            );
 
-            foreach ($data['rows'] ?? [] as $row) {
+            if (empty($data['error'])) {
 
-                $name = $row['dimensionValues'][0]['value'] ?? 'Unknown';
+                $total = 0;
+                $map   = [];
 
-                $value = intval(
-                    $row['metricValues'][0]['value'] ?? 0
-                );
+                foreach ($data['rows'] ?? [] as $row) {
 
-                $map[$name] = ($map[$name] ?? 0) + $value;
+                    $name = $row['dimensionValues'][0]['value'] ?? 'Unknown';
 
-                $total += $value;
-            }
+                    $value = intval(
+                        $row['metricValues'][0]['value'] ?? 0
+                    );
 
-            foreach ($map as $name => $value) {
+                    $map[$name] = ($map[$name] ?? 0) + $value;
 
-                $countries[] = [
-                    'name'    => $name,
-                    'percent' => $total > 0
-                        ? round(($value / $total) * 100)
-                        : 0
-                ];
+                    $total += $value;
+                }
+
+                foreach ($map as $name => $value) {
+
+                    $countries[] = [
+                        'name'    => $name,
+                        'percent' => $total > 0
+                            ? round(($value / $total) * 100)
+                            : 0
+                    ];
+                }
             }
         }
     }
@@ -461,40 +514,47 @@ function flipnzee_fetch_insights($property_id, $post_id) {
                 ],
 
                 'limit' => 5
-            ])
+            ]),
+
+            'timeout' => 20
         ]
     );
 
     if (!is_wp_error($response)) {
 
-        $data = json_decode(
-            wp_remote_retrieve_body($response),
-            true
-        );
+        $status = wp_remote_retrieve_response_code($response);
 
-        if (empty($data['error'])) {
+        if ($status === 200) {
 
-            $total = 0;
+            $data = json_decode(
+                wp_remote_retrieve_body($response),
+                true
+            );
 
-            foreach ($data['rows'] ?? [] as $row) {
+            if (empty($data['error'])) {
 
-                $value = intval(
-                    $row['metricValues'][0]['value'] ?? 0
-                );
+                $total = 0;
 
-                $sources[] = [
-                    'name'  => $row['dimensionValues'][0]['value'] ?? '',
-                    'value' => $value
-                ];
+                foreach ($data['rows'] ?? [] as $row) {
 
-                $total += $value;
-            }
+                    $value = intval(
+                        $row['metricValues'][0]['value'] ?? 0
+                    );
 
-            foreach ($sources as &$s) {
+                    $sources[] = [
+                        'name'  => $row['dimensionValues'][0]['value'] ?? '',
+                        'value' => $value
+                    ];
 
-                $s['percent'] = $total > 0
-                    ? round(($s['value'] / $total) * 100)
-                    : 0;
+                    $total += $value;
+                }
+
+                foreach ($sources as &$s) {
+
+                    $s['percent'] = $total > 0
+                        ? round(($s['value'] / $total) * 100)
+                        : 0;
+                }
             }
         }
     }
@@ -556,14 +616,30 @@ function flipnzee_fetch_insights($property_id, $post_id) {
 
                         'dimensions' => ['query'],
 
-                        'rowLimit' => 10,
+                        'rowLimit' => 50,
 
                         'searchType' => 'web'
-                    ])
+                    ]),
+
+                    'timeout' => 20
                 ]
             );
 
             if (is_wp_error($response)) {
+                continue;
+            }
+
+            $status = wp_remote_retrieve_response_code($response);
+
+            if ($status !== 200) {
+
+                error_log(
+                    'FLIPNZEE SC HTTP ERROR: ' .
+                    $status .
+                    ' | RESPONSE: ' .
+                    wp_remote_retrieve_body($response)
+                );
+
                 continue;
             }
 
@@ -594,6 +670,13 @@ function flipnzee_fetch_insights($property_id, $post_id) {
                     ];
                 }
 
+                usort($keywords, function($a, $b) {
+
+                    return ($a['position'] ?? 999)
+                        <=> ($b['position'] ?? 999);
+
+                });
+
                 break;
             }
         }
@@ -613,3 +696,4 @@ function flipnzee_fetch_insights($property_id, $post_id) {
         6 * HOUR_IN_SECONDS
     );
 }
+```
