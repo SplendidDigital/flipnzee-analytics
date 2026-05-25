@@ -28,6 +28,10 @@ require_once plugin_dir_path(__FILE__) . 'includes/shortcodes.php';
 require_once plugin_dir_path(__FILE__) . 'includes/admin/menu.php';
 require_once plugin_dir_path(__FILE__) . 'includes/admin/settings-page.php';
 
+add_action(
+    'admin_post_flipnzee_refresh_data',
+    'flipnzee_manual_refresh'
+);
 // ================== FRONTEND ASSETS ==================
 
   // ================== FRONTEND ASSETS ==================
@@ -363,6 +367,9 @@ add_action('save_post', function ($post_id) {
     }
 
 
+
+
+
     // ================= SAVE PROPERTY ID =================
 
     if (isset($_POST['ga_property_id'])) {
@@ -402,3 +409,41 @@ add_action('save_post', function ($post_id) {
     delete_transient("flipnzee_meta_{$post_id}");
 
 });
+
+function flipnzee_manual_refresh() {
+
+    if (!current_user_can('manage_options')) {
+        wp_die('Unauthorized');
+    }
+
+    $post_id = intval($_GET['post_id'] ?? 0);
+
+    if (!$post_id) {
+        wp_die('Invalid post ID');
+    }
+
+    delete_transient("flipnzee_main_{$post_id}");
+    delete_transient("flipnzee_meta_{$post_id}");
+
+    $property_id = get_post_meta(
+        $post_id,
+        '_ga_property_id',
+        true
+    );
+
+    if ($property_id) {
+
+        flipnzee_fetch_and_store(
+            $property_id,
+            $post_id
+        );
+
+        flipnzee_fetch_insights(
+            $property_id,
+            $post_id
+        );
+    }
+
+    wp_redirect(wp_get_referer());
+    exit;
+}

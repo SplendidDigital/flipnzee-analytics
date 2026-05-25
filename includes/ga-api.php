@@ -513,6 +513,87 @@ function flipnzee_fetch_insights($property_id, $post_id) {
     }
 
 
+    // ================= CITIES =================
+
+$cities = [];
+
+$response = wp_remote_post(
+    $endpoint,
+    [
+        'headers' => [
+            'Authorization' => 'Bearer ' . $access_token,
+            'Content-Type'  => 'application/json'
+        ],
+
+        'body' => wp_json_encode([
+
+            'dateRanges' => [
+                [
+                    'startDate' => '30daysAgo',
+                    'endDate'   => 'today'
+                ]
+            ],
+
+            'dimensions' => [
+                ['name' => 'city']
+            ],
+
+            'metrics' => [
+                ['name' => 'activeUsers']
+            ],
+
+            'limit' => 10
+        ]),
+
+        'timeout' => 20
+    ]
+);
+
+if (!is_wp_error($response)) {
+
+    $status = wp_remote_retrieve_response_code($response);
+
+    if ($status === 200) {
+
+        $data = json_decode(
+            wp_remote_retrieve_body($response),
+            true
+        );
+
+        if (empty($data['error'])) {
+
+            $total = 0;
+            $map   = [];
+
+            foreach ($data['rows'] ?? [] as $row) {
+
+                $name = $row['dimensionValues'][0]['value'] ?? 'Unknown';
+
+                $value = intval(
+                    $row['metricValues'][0]['value'] ?? 0
+                );
+
+                $map[$name] = ($map[$name] ?? 0) + $value;
+
+                $total += $value;
+            }
+
+            foreach ($map as $name => $value) {
+
+                $cities[] = [
+                    'name'    => $name,
+                    'percent' => $total > 0
+                        ? round(($value / $total) * 100)
+                        : 0
+                ];
+            }
+        }
+    }
+}
+
+    
+
+
 
     // ================= SOURCES =================
 
@@ -716,13 +797,14 @@ function flipnzee_fetch_insights($property_id, $post_id) {
 
     // ================= SAVE META =================
 
-    set_transient(
-        "flipnzee_meta_{$post_id}",
-        [
-            'countries' => $countries,
-            'sources'   => $sources,
-            'keywords'  => $keywords
-        ],
+  set_transient(
+    "flipnzee_meta_{$post_id}",
+    [
+        'countries' => $countries,
+        'cities'    => $cities,
+        'sources'   => $sources,
+        'keywords'  => $keywords
+    ],
         6 * HOUR_IN_SECONDS
     );
 }

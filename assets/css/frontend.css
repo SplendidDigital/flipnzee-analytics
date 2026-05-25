@@ -1,6 +1,8 @@
 /* ================= VERIFIED DASHBOARD ================= */
 
 .flip-wrap{
+    display:block;
+    width:100%;
     border:1px solid #e5e7eb;
     border-radius:16px;
     padding:24px;
@@ -61,7 +63,11 @@
 }
 
 .flip-section{
+    display:block;
+    width:100%;
+    clear:both;
     margin-top:20px;
+    margin-bottom:28px;
 }
 
 .flip-bar{
@@ -84,12 +90,15 @@
     display:flex;
     justify-content:space-between;
     font-size:14px;
+    gap:14px;
+    flex-wrap:wrap;
 }
 
 .flip-top-keyword{
     color:#16a34a;
     font-weight:600;
 }
+
 
 
 /* ================= LISTINGS GRID ================= */

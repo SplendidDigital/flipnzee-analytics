@@ -35,7 +35,7 @@ file_put_contents(
 $cache_key = "flipnzee_main_{$post_id}";
 
 // Force refresh temporarily
-$stats = false;
+$stats = get_transient($cache_key);
 
     // ONLY fetch if transient truly missing
     // (not when users = 0)
@@ -131,6 +131,7 @@ function flipnzee_get_meta($post_id) {
 
         return [
             'countries' => [],
+            'cities'    => [],
             'sources'   => [],
             'keywords'  => []
         ];
@@ -197,6 +198,27 @@ error_log(
 
 <div class="flip-wrap">
 
+    <?php if (current_user_can('manage_options')) : ?>
+
+        <p style="margin-bottom:20px;">
+
+            <a
+                href="<?php echo esc_url(
+                    admin_url(
+                        'admin-post.php?action=flipnzee_refresh_data&post_id=' . get_the_ID()
+                    )
+                ); ?>"
+                class="button button-primary"
+            >
+                Refresh Analytics
+            </a>
+
+        </p>
+
+    <?php endif; ?>
+
+
+    
     <div class="flip-header">
 
         <div class="flip-title-big">
@@ -310,6 +332,50 @@ error_log(
         </div>
 
     <?php endif; ?>
+
+
+    <!-- CITIES -->
+
+<?php if (!empty($meta['cities'])) : ?>
+
+    <div class="flip-section">
+
+        <h4>Top Cities</h4>
+
+        <?php foreach ($meta['cities'] as $c) : ?>
+
+            <?php $percent = $c['percent'] ?? 0; ?>
+
+            <div class="flip-row">
+
+                <div class="flip-keyword">
+
+                    <span>
+                        <?php echo esc_html($c['name'] ?? ''); ?>
+                    </span>
+
+                    <span>
+                        <?php echo esc_html($percent); ?>%
+                    </span>
+
+                </div>
+
+                <div class="flip-bar">
+
+                    <div
+                        class="flip-bar-fill"
+                        style="width:<?php echo esc_attr($percent); ?>%"
+                    ></div>
+
+                </div>
+
+            </div>
+
+        <?php endforeach; ?>
+
+    </div>
+
+<?php endif; ?>
 
 
     <!-- SOURCES -->
@@ -460,6 +526,8 @@ if (is_admin() && defined('REST_REQUEST') && REST_REQUEST) {
     <?php $stats = $post->flip_stats; ?>
 
     <div class="flip-card-listing">
+
+    
 
         <div class="flip-rank <?php echo ($rank <= 3 ? "top-$rank" : ""); ?>">
             #<?php echo $rank; ?>
