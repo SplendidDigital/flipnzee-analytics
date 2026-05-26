@@ -1,31 +1,14 @@
 <?php
 
-file_put_contents(
-    '/tmp/flipnzee-test.log',
-    "SHORTCODES FILE LOADED\n",
-    FILE_APPEND
-);
 
 // ================= HELPERS =================
 function flipnzee_get_stats($post_id) {
-file_put_contents(
-    '/tmp/flipnzee-test.log',
-    "GET_STATS FUNCTION CALLED\n",
-    FILE_APPEND
-);
+
 
     // Force integer safety
-    file_put_contents(
-    '/tmp/flipnzee-test.log',
-    "RAW POST ID: " . print_r($post_id, true) . "\n",
-    FILE_APPEND
-);
+
     $post_id = intval($post_id);
-    file_put_contents(
-    '/tmp/flipnzee-test.log',
-    "INT POST ID: {$post_id}\n",
-    FILE_APPEND
-);
+
 
     if (!$post_id) {
         return flipnzee_empty_response();
@@ -40,11 +23,7 @@ $stats = get_transient($cache_key);
     // ONLY fetch if transient truly missing
     // (not when users = 0)
     if ($stats === false) {
-file_put_contents(
-    '/tmp/flipnzee-test.log',
-    "FETCH TRIGGERED FOR POST {$post_id}\n",
-    FILE_APPEND
-);
+
         $property_id = get_post_meta(
             $post_id,
             '_ga_property_id',
@@ -54,11 +33,7 @@ file_put_contents(
         $property_id = trim($property_id);
 
         if (!empty($property_id)) {
-            file_put_contents(
-    '/tmp/flipnzee-test.log',
-    "PROPERTY FOUND: {$property_id}\n",
-    FILE_APPEND
-);
+  
 
             // Fresh fetch
             flipnzee_fetch_and_store(
@@ -162,11 +137,7 @@ function flipnzee_clean_source_name($name) {
 
 add_shortcode('flipnzee_verified_badge', function () {
 
-    file_put_contents(
-    '/tmp/flipnzee-test.log',
-    "SHORTCODE EXECUTED\n",
-    FILE_APPEND
-);
+ 
    if (is_admin() && defined('REST_REQUEST') && REST_REQUEST) {
     return '';
 }
@@ -178,16 +149,9 @@ if (!is_singular('listing')) {
 
 
     $post_id = get_the_ID();
-    error_log('SHORTCODE RUNNING FOR POST: ' . $post_id);
+    
 
-error_log(
-    'PROPERTY ID: ' .
-    get_post_meta(
-        $post_id,
-        '_ga_property_id',
-        true
-    )
-);
+
 
     $stats = flipnzee_get_stats($post_id);
 
@@ -494,9 +458,9 @@ setInterval(function () {
 
         const el = document.querySelector('.flip-live-users');
 
-        if (el) {
-            el.innerHTML = data;
-        }
+if (el && data.trim() !== '') {
+    el.innerHTML = data;
+}
 
     });
 
