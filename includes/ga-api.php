@@ -1,5 +1,82 @@
 <?php
 
+function flipnzee_get_realtime_users($property_id) {
+
+    if (!$property_id) {
+        return 0;
+    }
+
+    // CACHE
+    $cache_key = 'flip_live_' . $property_id;
+
+    $cached = get_transient($cache_key);
+
+if ($cached !== false && $cached > 0) {
+    return $cached;
+}
+
+    // USE EXISTING TOKEN SYSTEM
+    $access_token = flipnzee_get_access_token();
+
+    if (!$access_token) {
+        return 0;
+    }
+
+    $response = wp_remote_post(
+        "https://analyticsdata.googleapis.com/v1beta/properties/{$property_id}:runRealtimeReport",
+        [
+            'headers' => [
+                'Authorization' => 'Bearer ' . $access_token,
+                'Content-Type'  => 'application/json'
+            ],
+
+            'body' => wp_json_encode([
+                'metrics' => [
+                    [
+                        'name' => 'activeUsers'
+                    ]
+                ]
+            ]),
+
+            'timeout' => 20
+        ]
+    );
+
+    if (is_wp_error($response)) {
+        return 0;
+    }
+
+    $status = wp_remote_retrieve_response_code($response);
+
+    if ($status !== 200) {
+
+        error_log(
+            'FLIPNZEE REALTIME ERROR: ' .
+            wp_remote_retrieve_body($response)
+        );
+
+        return 0;
+    }
+
+    $data = json_decode(
+        wp_remote_retrieve_body($response),
+        true
+    );
+
+    $users = intval(
+        $data['rows'][0]['metricValues'][0]['value'] ?? 0
+    );
+
+    // CACHE FOR 60 SECONDS
+    set_transient(
+        $cache_key,
+        $users,
+        60
+    );
+
+    return $users;
+}
+
 // ================== EMPTY RESPONSE ==================
 
 function flipnzee_empty_response() {

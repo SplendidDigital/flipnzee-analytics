@@ -190,6 +190,14 @@ error_log(
 );
 
     $stats = flipnzee_get_stats($post_id);
+
+    $property_id = get_post_meta(
+    $post_id,
+    '_ga_property_id',
+    true
+);
+
+$live_users = flipnzee_get_realtime_users($property_id);
     $meta  = flipnzee_get_meta($post_id);
 
     ob_start();
@@ -233,6 +241,18 @@ error_log(
 
 
     <div class="flip-kpi-grid">
+
+    <div class="flip-kpi-box live-users-box">
+
+    <div class="flip-kpi-value flip-live-users">
+        <?php echo number_format($live_users); ?>
+    </div>
+
+    <div class="flip-kpi-label">
+        Live Users
+    </div>
+
+</div>
 
         <div class="flip-kpi-box">
             <div class="flip-kpi-value">
@@ -457,6 +477,32 @@ error_log(
     <?php endif; ?>
 
 </div>
+
+<?php
+
+?>
+
+<script>
+
+setInterval(function () {
+
+    fetch(window.location.pathname + '?flipnzee_live=1')
+
+    .then(response => response.text())
+
+    .then(data => {
+
+        const el = document.querySelector('.flip-live-users');
+
+        if (el) {
+            el.innerHTML = data;
+        }
+
+    });
+
+}, 30000);
+
+</script>
 
 <?php
 

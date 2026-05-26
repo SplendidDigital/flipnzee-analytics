@@ -447,3 +447,36 @@ function flipnzee_manual_refresh() {
     wp_redirect(wp_get_referer());
     exit;
 }
+
+// ================== LIVE USERS ENDPOINT ==================
+
+add_action('init', function () {
+
+    if (!isset($_GET['flipnzee_live'])) {
+        return;
+    }
+
+    if (!is_singular('listing')) {
+        echo 0;
+        exit;
+    }
+
+$post_id = url_to_postid(
+    home_url($_SERVER['REQUEST_URI'])
+);
+
+if (!$post_id) {
+    echo 0;
+    exit;
+}
+
+    $property_id = get_post_meta(
+        $post_id,
+        '_ga_property_id',
+        true
+    );
+
+    echo flipnzee_get_realtime_users($property_id);
+
+    exit;
+});
