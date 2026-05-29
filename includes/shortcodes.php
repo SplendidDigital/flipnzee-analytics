@@ -162,7 +162,12 @@ if (!is_singular('listing')) {
 );
 
 $live_users = flipnzee_get_realtime_users($property_id);
-    $meta  = flipnzee_get_meta($post_id);
+
+$recent = flipnzee_get_recent_activity(
+    $post_id
+);
+
+$meta = flipnzee_get_meta($post_id);
 
     ob_start();
 
@@ -214,6 +219,19 @@ $live_users = flipnzee_get_realtime_users($property_id);
 
     <div class="flip-kpi-label">
         Live Users
+    </div>
+
+</div>
+<div class="flip-kpi-box">
+
+    <div class="flip-kpi-value">
+        <?php echo number_format(
+            $recent['users_24h'] ?? 0
+        ); ?>
+    </div>
+
+    <div class="flip-kpi-label">
+        Visitors (24h)
     </div>
 
 </div>
@@ -272,6 +290,40 @@ $live_users = flipnzee_get_realtime_users($property_id);
         ago
 
     </div>
+
+    <?php if (!empty($recent['cities_24h'])) : ?>
+
+<div class="flip-section">
+
+    <h4>Top Cities (24h)</h4>
+
+    <?php foreach ($recent['cities_24h'] as $city) : ?>
+
+        <div class="flip-keyword">
+
+            <span>
+                <?php
+                echo esc_html(
+                    $city['name']
+                );
+                ?>
+            </span>
+
+            <span>
+                <?php
+                echo number_format(
+                    $city['users']
+                );
+                ?>
+            </span>
+
+        </div>
+
+    <?php endforeach; ?>
+
+</div>
+
+<?php endif; ?>
 
 
     <!-- COUNTRIES -->

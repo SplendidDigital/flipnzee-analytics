@@ -885,3 +885,120 @@ if (!is_wp_error($response)) {
         6 * HOUR_IN_SECONDS
     );
 }
+function flipnzee_fetch_recent_activity(
+    $property_id,
+    $post_id
+) {
+
+    $endpoint =
+        "https://analyticsdata.googleapis.com/v1beta/properties/{$property_id}:runReport";
+
+    $data = flipnzee_google_post(
+        $endpoint,
+        [
+            'dateRanges' => [
+                [
+                    'startDate' => '1daysAgo',
+                    'endDate'   => 'today'
+                ]
+            ],
+
+            'metrics' => [
+                [
+                    'name' => 'activeUsers'
+                ]
+            ],
+
+            'dimensions' => [
+                [
+                    'name' => 'city'
+                ]
+            ],
+
+            'limit' => 10
+        ]
+    );
+
+    if (!$data || empty($data['rows'])) {
+
+        set_transient(
+            "flipnzee_recent_{$post_id}",
+            [
+                'users_24h' => 0,
+                'cities_24h' => []
+            ],
+            30 * MINUTE_IN_SECONDS
+        );
+
+        return;
+    }
+
+    $users_24h = 0;
+    $cities_24h = [];
+
+    foreach ($data['rows'] as $row) {
+
+        $city =
+            $row['dimensionValues'][0]['value']
+            ?? 'Unknown';
+
+        $users =
+            intval(
+                $row['metricValues'][0]['value']
+                ?? 0
+            );
+
+        $users_24h += $users;
+
+        $cities_24h[] = [
+            'name' => $city,
+            'users' => $users
+        ];
+    }
+
+    set_transient(
+        "flipnzee_recent_{$post_id}",
+        [
+            'users_24h' => $users_24h,
+            'cities_24h' => $cities_24h
+        ],
+        30 * MINUTE_IN_SECONDS
+    );
+}
+
+function flipnzee_get_recent_activity(
+    $post_id
+) {
+
+    $cache =
+        get_transient(
+            "flipnzee_recent_{$post_id}"
+        );
+
+    if ($cache !== false) {
+        return $cache;
+    }
+
+    $property_id = get_post_meta(
+        $post_id,
+        '_ga_property_id',
+        true
+    );
+
+    if ($property_id) {
+
+        flipnzee_fetch_recent_activity(
+            $property_id,
+            $post_id
+        );
+
+        return get_transient(
+            "flipnzee_recent_{$post_id}"
+        );
+    }
+
+    return [
+        'users_24h' => 0,
+        'cities_24h' => []
+    ];
+}

@@ -408,6 +408,8 @@ add_action('save_post', function ($post_id) {
 
     delete_transient("flipnzee_meta_{$post_id}");
 
+    delete_transient("flipnzee_recent_{$post_id}");
+
 });
 
 function flipnzee_manual_refresh() {
@@ -424,6 +426,7 @@ function flipnzee_manual_refresh() {
 
     delete_transient("flipnzee_main_{$post_id}");
     delete_transient("flipnzee_meta_{$post_id}");
+    delete_transient("flipnzee_recent_{$post_id}");
 
     $property_id = get_post_meta(
         $post_id,
