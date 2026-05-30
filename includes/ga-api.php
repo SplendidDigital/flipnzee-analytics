@@ -578,13 +578,16 @@ function flipnzee_fetch_insights($property_id, $post_id) {
 
                 foreach ($map as $name => $value) {
 
-                    $countries[] = [
-                        'name'    => $name,
-                        'percent' => $total > 0
-                            ? round(($value / $total) * 100)
-                            : 0
-                    ];
-                }
+    $countries[] = [
+        'name'    => $name,
+
+        'users'   => $value,
+
+        'percent' => $total > 0
+            ? round(($value / $total) * 100)
+            : 0
+    ];
+}
             }
         }
     }

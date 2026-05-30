@@ -659,3 +659,228 @@ if (is_admin() && defined('REST_REQUEST') && REST_REQUEST) {
     return ob_get_clean();
 
 });
+
+// ================= MARKET OVERVIEW =================
+
+add_shortcode('flipnzee_market_overview', function () {
+
+    $posts = get_posts([
+        'post_type'      => 'listing',
+        'posts_per_page' => -1,
+        'post_status'    => 'publish'
+    ]);
+
+    if (!$posts) {
+        return '<p>No listings found.</p>';
+    }
+
+   $total_users = 0;
+$total_sessions = 0;
+
+$items = [];
+
+$all_countries = [];
+
+    foreach ($posts as $post) {
+
+        $property_id = get_post_meta(
+            $post->ID,
+            '_ga_property_id',
+            true
+        );
+
+        if (!$property_id) {
+            continue;
+        }
+
+        $stats = flipnzee_get_stats($post->ID);
+
+        $meta = flipnzee_get_meta($post->ID);
+
+if (!empty($meta['countries'])) {
+
+    foreach ($meta['countries'] as $country) {
+
+    $name = $country['name'] ?? '';
+
+    $users = intval(
+        $country['users'] ?? 0
+    );
+
+    if (!$name) {
+        continue;
+    }
+
+    if (!isset($all_countries[$name])) {
+        $all_countries[$name] = 0;
+    }
+
+    $all_countries[$name] += $users;
+}
+}
+
+        $total_users += intval($stats['users']);
+        $total_sessions += intval($stats['sessions']);
+
+        $post->flip_stats = $stats;
+
+        $items[] = $post;
+    }
+
+    usort($items, function ($a, $b) {
+
+        return ($b->flip_stats['users'] ?? 0)
+            <=>
+            ($a->flip_stats['users'] ?? 0);
+
+    });
+
+    arsort($all_countries);
+
+    ob_start();
+
+?>
+
+<div class="flip-wrap">
+
+    <div class="flip-header">
+
+        <div class="flip-title-big">
+            Market Analytics Overview
+        </div>
+
+    </div>
+
+    <div class="flip-kpi-grid">
+
+        <div class="flip-kpi-box">
+
+            <div class="flip-kpi-value">
+                <?php echo number_format($total_users); ?>
+            </div>
+
+            <div class="flip-kpi-label">
+                Total Users
+            </div>
+
+        </div>
+
+        <div class="flip-kpi-box">
+
+            <div class="flip-kpi-value">
+                <?php echo number_format($total_sessions); ?>
+            </div>
+
+            <div class="flip-kpi-label">
+                Total Sessions
+            </div>
+
+        </div>
+
+        <div class="flip-kpi-box">
+
+            <div class="flip-kpi-value">
+                <?php echo count($items); ?>
+            </div>
+
+            <div class="flip-kpi-label">
+                Properties Tracked
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="flip-section">
+
+        <h3>Property Rankings</h3>
+
+        <?php $rank = 1; ?>
+
+<?php foreach ($items as $post) : ?>
+
+    <?php $stats = $post->flip_stats; ?>
+
+    <div class="flip-card-listing">
+
+        <div class="flip-rank">
+            #<?php echo $rank; ?>
+        </div>
+
+        <h4>
+            <a href="<?php echo esc_url(get_permalink($post->ID)); ?>">
+                <?php echo esc_html(get_the_title($post->ID)); ?>
+            </a>
+        </h4>
+
+        <p>
+            Users:
+            <strong>
+                <?php echo number_format($stats['users']); ?>
+            </strong>
+        </p>
+
+        <p>
+            Sessions:
+            <strong>
+                <?php echo number_format($stats['sessions']); ?>
+            </strong>
+        </p>
+
+        <p>
+            Growth:
+            <strong>
+                <?php
+                echo $stats['trend_label']
+                . ' '
+                . abs($stats['trend_percent']);
+                ?>%
+            </strong>
+        </p>
+
+    </div>
+
+    <?php $rank++; ?>
+
+<?php endforeach; ?>
+
+<?php if (!empty($all_countries)) : ?>
+
+    <div class="flip-section">
+
+        <h3>Market Geography</h3>
+
+        <?php foreach (
+            array_slice($all_countries, 0, 10, true)
+            as $country => $score
+        ) : ?>
+
+            <div class="flip-keyword">
+
+                <span>
+                    <?php echo esc_html($country); ?>
+                </span>
+
+                <span>
+                    <?php echo number_format($score); ?> users
+                </span>
+
+            </div>
+
+        <?php endforeach; ?>
+
+    </div>
+
+<?php endif; ?>
+
+    </div>
+
+</div>
+
+<?php
+
+return ob_get_clean();
+
+});
+
+
