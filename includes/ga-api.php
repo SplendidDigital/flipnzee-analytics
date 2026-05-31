@@ -11,7 +11,7 @@ function flipnzee_get_realtime_users($property_id) {
 
     $cached = get_transient($cache_key);
 
-if ($cached !== false && $cached > 0) {
+if ($cached !== false) {
     return $cached;
 }
 
@@ -189,11 +189,7 @@ function flipnzee_get_access_token() {
 // ================== GOOGLE POST ==================
 
 function flipnzee_google_post($endpoint, $body) {
-    file_put_contents(
-    '/tmp/flipnzee-test.log',
-    "GOOGLE POST FUNCTION CALLED\n",
-    FILE_APPEND
-);
+ 
 
     $access_token = flipnzee_get_access_token();
 
@@ -215,13 +211,7 @@ function flipnzee_google_post($endpoint, $body) {
         ]
     );
 
-    file_put_contents(
-    '/tmp/flipnzee-test.log',
-    "RAW API RESPONSE:\n" .
-    print_r($response, true) .
-    "\n",
-    FILE_APPEND
-);
+    
 
     if (is_wp_error($response)) {
 
@@ -266,12 +256,7 @@ function flipnzee_fetch_and_store($property_id, $post_id) {
         return;
     }
 
-    error_log(
-        'FLIPNZEE FETCH MAIN | PROPERTY: ' .
-        $property_id .
-        ' | POST: ' .
-        $post_id
-    );
+    
 
     $access_token = flipnzee_get_access_token();
 
@@ -310,13 +295,8 @@ function flipnzee_fetch_and_store($property_id, $post_id) {
         ]
     );
 
-    file_put_contents(
-    '/tmp/flipnzee-test.log',
-    "CURRENT DATA:\n" .
-    print_r($data_current, true) .
-    "\n",
-    FILE_APPEND
-);
+   
+   
 
     if (!$data_current) {
 
@@ -329,10 +309,7 @@ function flipnzee_fetch_and_store($property_id, $post_id) {
         return;
     }
 
-    error_log(
-        'FLIPNZEE CURRENT RESPONSE: ' .
-        print_r($data_current, true)
-    );
+
 
     if (!empty($data_current['error'])) {
 
@@ -397,15 +374,10 @@ function flipnzee_fetch_and_store($property_id, $post_id) {
         ]
     );
 
+
   
 
-    file_put_contents(
-    '/tmp/flipnzee-test.log',
-    "PREVIOUS DATA:\n" .
-    print_r($data_previous, true) .
-    "\n",
-    FILE_APPEND
-);
+  
 
     if (!$data_previous) {
 
@@ -425,17 +397,16 @@ function flipnzee_fetch_and_store($property_id, $post_id) {
 
         $previous_users = 0;
 
-    } elseif (
-        empty($data_previous['rows']) ||
-        !isset($data_previous['rows'][0]['metricValues'][0]['value'])
-    ) {
+   } elseif (
+    empty($data_previous['rows']) ||
+    !isset($data_previous['rows'][0]['metricValues'][0]['value'])
+) {
 
-        error_log(
-            'FLIPNZEE PREVIOUS DATA ERROR: ' .
-            $property_id
-        );
+    $previous_users = 0;
 
-        $previous_users = 0;
+    error_log(
+        'FLIPNZEE PREVIOUS PERIOD HAS NO DATA'
+    );
 
     } else {
 
@@ -448,21 +419,33 @@ function flipnzee_fetch_and_store($property_id, $post_id) {
 
     // ================= TREND =================
 
-    $trend_percent = $previous_users > 0
-        ? round(
-            (
-                ($users - $previous_users)
-                / $previous_users
-            ) * 100
-        )
-        : 0;
+ 
+if ($previous_users <= 0){
+
+    if ($users > 0) {
+
+        $trend_percent = 100;
+        $trend_label = '↑';
+
+    } else {
+
+        $trend_percent = 0;
+        $trend_label = '→';
+    }
+
+} else {
+
+    $trend_percent = round(
+        (
+            ($users - $previous_users)
+            / $previous_users
+        ) * 100
+    );
 
     $trend_label = $trend_percent > 0
         ? '↑'
         : ($trend_percent < 0 ? '↓' : '→');
-
-
-
+}
     // ================= SAVE =================
 
     set_transient(
@@ -485,6 +468,7 @@ function flipnzee_fetch_and_store($property_id, $post_id) {
 // ================== FETCH INSIGHTS ==================
 
 function flipnzee_fetch_insights($property_id, $post_id) {
+    
 
     $property_id = trim($property_id);
     $post_id     = intval($post_id);
@@ -493,12 +477,7 @@ function flipnzee_fetch_insights($property_id, $post_id) {
         return;
     }
 
-    error_log(
-        'FLIPNZEE FETCH META | PROPERTY: ' .
-        $property_id .
-        ' | POST: ' .
-        $post_id
-    );
+   
 
     $access_token = flipnzee_get_access_token();
 
@@ -671,7 +650,61 @@ if (!is_wp_error($response)) {
     }
 }
 
-    
+// ================= RETURNING VISITORS =================
+
+$returning_visitors = 0;
+
+$response = wp_remote_post(
+    $endpoint,
+    [
+        'headers' => [
+            'Authorization' => 'Bearer ' . $access_token,
+            'Content-Type'  => 'application/json'
+        ],
+
+        'body' => wp_json_encode([
+            'dateRanges' => [
+                [
+                    'startDate' => '30daysAgo',
+                    'endDate'   => 'today'
+                ]
+            ],
+
+            'metrics' => [
+                ['name' => 'activeUsers'],
+                ['name' => 'newUsers']
+            ]
+        ]),
+
+        'timeout' => 20
+    ]
+);
+
+if (
+    !is_wp_error($response) &&
+    wp_remote_retrieve_response_code($response) === 200
+) {
+
+    $data = json_decode(
+        wp_remote_retrieve_body($response),
+        true
+    );
+
+    $active_users = intval(
+        $data['rows'][0]['metricValues'][0]['value'] ?? 0
+    );
+
+    $new_users = intval(
+        $data['rows'][0]['metricValues'][1]['value'] ?? 0
+    );
+
+    $returning_visitors = max(
+        0,
+        $active_users - $new_users
+    );
+
+  
+}    
 
 
 
@@ -780,10 +813,7 @@ if (!is_wp_error($response)) {
 
         foreach ($variants as $site_for_api) {
 
-            error_log(
-                'FLIPNZEE SC TRY: ' .
-                $site_for_api
-            );
+            
 
             $response = wp_remote_post(
                 'https://searchconsole.googleapis.com/webmasters/v3/sites/' .
@@ -838,10 +868,7 @@ if (!is_wp_error($response)) {
 
             $data = json_decode($raw, true);
 
-            error_log(
-                'FLIPNZEE SC RESPONSE: ' .
-                $raw
-            );
+          
 
             if (!empty($data['rows'])) {
 
@@ -880,13 +907,14 @@ if (!is_wp_error($response)) {
   set_transient(
     "flipnzee_meta_{$post_id}",
     [
-        'countries' => $countries,
-        'cities'    => $cities,
-        'sources'   => $sources,
-        'keywords'  => $keywords
+        'countries'          => $countries,
+        'cities'             => $cities,
+        'sources'            => $sources,
+        'keywords'           => $keywords,
+        'returning_visitors' => $returning_visitors
     ],
-        6 * HOUR_IN_SECONDS
-    );
+    6 * HOUR_IN_SECONDS
+);  
 }
 function flipnzee_fetch_recent_activity(
     $property_id,

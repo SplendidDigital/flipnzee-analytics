@@ -104,13 +104,14 @@ function flipnzee_get_meta($post_id) {
     // Safety fallback
     if (!$meta || !is_array($meta)) {
 
-        return [
-            'countries' => [],
-            'cities'    => [],
-            'sources'   => [],
-            'keywords'  => []
-        ];
-    }
+    return [
+        'countries'          => [],
+        'cities'             => [],
+        'sources'            => [],
+        'keywords'           => [],
+        'returning_visitors' => 0
+    ];
+}
 
     return $meta;
 }
@@ -232,6 +233,22 @@ $meta = flipnzee_get_meta($post_id);
 
     <div class="flip-kpi-label">
         Visitors (24h)
+    </div>
+
+</div>
+
+<div class="flip-kpi-box">
+
+    <div class="flip-kpi-value">
+        <?php
+        echo number_format(
+            $meta['returning_visitors'] ?? 0
+        );
+        ?>
+    </div>
+
+    <div class="flip-kpi-label">
+        Returning Visitors
     </div>
 
 </div>

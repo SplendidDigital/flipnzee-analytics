@@ -3,7 +3,7 @@
 /*
 Plugin Name: Flipnzee Analytics
 Description: GA Verified Traffic + Insights
-Version: 2.4
+Version: 2.5
 Author: Flipnzee
 */
 
@@ -413,6 +413,7 @@ add_action('save_post', function ($post_id) {
 });
 
 function flipnzee_manual_refresh() {
+    error_log('FLIPNZEE MANUAL REFRESH STARTED');
 
     if (!current_user_can('manage_options')) {
         wp_die('Unauthorized');
