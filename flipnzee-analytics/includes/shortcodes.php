@@ -66,6 +66,14 @@ $stats = get_transient($cache_key);
 
 function flipnzee_get_meta($post_id) {
 
+  file_put_contents(
+    '/tmp/flipnzee-debug.log',
+    date('Y-m-d H:i:s') .
+    ' GET_META Post=' . $post_id . PHP_EOL,
+    FILE_APPEND
+);
+    
+
     // Force integer safety
     $post_id = intval($post_id);
 
@@ -76,7 +84,7 @@ function flipnzee_get_meta($post_id) {
     // Unique transient key
     $cache_key = "flipnzee_meta_{$post_id}";
 
-    $meta = get_transient($cache_key);
+    $meta = false;
 
     // ONLY fetch if transient missing
     if ($meta === false) {
@@ -91,15 +99,33 @@ function flipnzee_get_meta($post_id) {
 
         if (!empty($property_id)) {
 
-            flipnzee_fetch_insights(
-                $property_id,
-                $post_id
-            );
+    file_put_contents(
+        '/tmp/flipnzee-debug.log',
+        date('Y-m-d H:i:s') .
+        ' ABOUT_TO_CALL_FETCH_INSIGHTS Property=' . $property_id .
+        ' Post=' . $post_id . PHP_EOL,
+        FILE_APPEND
+    );
+
+    file_put_contents(
+    '/tmp/flipnzee-debug.log',
+    date('Y-m-d H:i:s') .
+    ' FUNCTION_EXISTS=' .
+    (function_exists('flipnzee_fetch_insights') ? 'YES' : 'NO') .
+    PHP_EOL,
+    FILE_APPEND
+);
+
+    flipnzee_fetch_insights(
+        $property_id,
+        $post_id
+    );
+}
 
             // Reload transient
             $meta = get_transient($cache_key);
         }
-    }
+    
 
     // Safety fallback
     if (!$meta || !is_array($meta)) {
@@ -180,6 +206,17 @@ $pages_per_user = round(
     1
 );
 
+$organic_clicks = intval(
+    $meta['organic_clicks'] ?? 0
+);
+
+$organic_impressions = intval(
+    $meta['organic_impressions'] ?? 0
+);
+
+$ranking_keywords = intval(
+    $meta['ranking_keywords'] ?? 0
+);
 $avg_minutes = floor($avg_duration / 60);
 
 $avg_seconds = $avg_duration % 60;
@@ -296,6 +333,42 @@ $avg_time_display =
 
     <div class="flip-kpi-label">
         Pages / User
+    </div>
+
+</div>
+
+<div class="flip-kpi-box">
+
+    <div class="flip-kpi-value">
+        <?php echo number_format($ranking_keywords); ?>
+    </div>
+
+    <div class="flip-kpi-label">
+        Ranking Keywords
+    </div>
+
+</div>
+
+<div class="flip-kpi-box">
+
+    <div class="flip-kpi-value">
+        <?php echo number_format($organic_impressions); ?>
+    </div>
+
+    <div class="flip-kpi-label">
+        Google Impressions
+    </div>
+
+</div>
+
+<div class="flip-kpi-box">
+
+    <div class="flip-kpi-value">
+        <?php echo number_format($organic_clicks); ?>
+    </div>
+
+    <div class="flip-kpi-label">
+        Organic Clicks
     </div>
 
 </div>

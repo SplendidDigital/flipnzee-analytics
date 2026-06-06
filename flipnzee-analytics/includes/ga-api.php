@@ -468,6 +468,21 @@ if ($previous_users <= 0){
 // ================== FETCH INSIGHTS ==================
 
 function flipnzee_fetch_insights($property_id, $post_id) {
+
+file_put_contents(
+    '/tmp/flipnzee-debug.log',
+    date('Y-m-d H:i:s') .
+    ' ENTERED_FETCH_INSIGHTS Property=' . $property_id .
+    ' Post=' . $post_id . PHP_EOL,
+    FILE_APPEND
+);
+
+error_log(
+    'FLIPNZEE FETCH INSIGHTS STARTED | Property: ' .
+    $property_id .
+    ' | Post: ' .
+    $post_id
+);
     
 
     $property_id = trim($property_id);
@@ -808,6 +823,10 @@ $pageviews = intval(
 
     $keywords = [];
 
+$organic_clicks = 0;
+$organic_impressions = 0;
+$ranking_keywords = 0;
+
     $site_url = get_post_meta(
         $post_id,
         '_ga_domain',
@@ -886,6 +905,14 @@ $pageviews = intval(
             $raw = wp_remote_retrieve_body($response);
 
             $data = json_decode($raw, true);
+            file_put_contents(
+    '/tmp/flipnzee-debug.log',
+    date('Y-m-d H:i:s') .
+    ' SC_ROWS=' .
+    count($data['rows'] ?? []) .
+    PHP_EOL,
+    FILE_APPEND
+);
 
           
 
@@ -893,19 +920,41 @@ $pageviews = intval(
 
                 foreach ($data['rows'] as $row) {
 
-                    $keywords[] = [
-                        'query' => $row['keys'][0] ?? '',
+    $clicks = intval(
+        $row['clicks'] ?? 0
+    );
 
-                        'clicks' => intval(
-                            $row['clicks'] ?? 0
-                        ),
+    $impressions = intval(
+        $row['impressions'] ?? 0
+    );
 
-                        'position' => round(
-                            $row['position'] ?? 0,
-                            1
-                        )
-                    ];
-                }
+    $organic_clicks += $clicks;
+
+    $organic_impressions += $impressions;
+
+    $keywords[] = [
+        'query' => $row['keys'][0] ?? '',
+
+        'clicks' => $clicks,
+
+        'impressions' => $impressions,
+
+        'position' => round(
+            $row['position'] ?? 0,
+            1
+        )
+    ];
+}
+$ranking_keywords = count($keywords);
+file_put_contents(
+    '/tmp/flipnzee-debug.log',
+    date('Y-m-d H:i:s') .
+    ' CLICKS=' . $organic_clicks .
+    ' IMPRESSIONS=' . $organic_impressions .
+    ' KEYWORDS=' . $ranking_keywords .
+    PHP_EOL,
+    FILE_APPEND
+);
 
                 usort($keywords, function($a, $b) {
 
@@ -920,19 +969,44 @@ $pageviews = intval(
     }
 
 
+error_log(
+    'FLIPNZEE SEO: ' .
+    print_r(
+        [
+            'clicks' => $organic_clicks,
+            'impressions' => $organic_impressions,
+            'keywords' => $ranking_keywords
+        ],
+        true
+    )
+);
+
 
     // ================= SAVE META =================
-
+file_put_contents(
+    '/tmp/flipnzee-debug.log',
+    date('Y-m-d H:i:s') .
+    ' SAVING_META clicks=' . $organic_clicks .
+    ' impressions=' . $organic_impressions .
+    ' keywords=' . $ranking_keywords .
+    PHP_EOL,
+    FILE_APPEND
+);
   set_transient(
     "flipnzee_meta_{$post_id}",
     [
-        'countries'          => $countries,
-        'cities'             => $cities,
-        'sources'            => $sources,
-        'keywords'           => $keywords,
-        'returning_visitors' => $returning_visitors,
-        'avg_duration'       => $avg_duration,
-        'pages_per_user'     => $pages_per_user
+        'countries'            => $countries,
+        'cities'               => $cities,
+        'sources'              => $sources,
+        'keywords'             => $keywords,
+
+        'organic_clicks'       => $organic_clicks,
+        'organic_impressions'  => $organic_impressions,
+        'ranking_keywords'     => $ranking_keywords,
+
+        'returning_visitors'   => $returning_visitors,
+        'avg_duration'         => $avg_duration,
+        'pages_per_user'       => $pages_per_user
     ],
     6 * HOUR_IN_SECONDS
 );  
@@ -972,6 +1046,7 @@ function flipnzee_fetch_recent_activity(
     );
 
     if (!$data || empty($data['rows'])) {
+        
 
         set_transient(
             "flipnzee_recent_{$post_id}",
