@@ -361,7 +361,7 @@ $avg_time_display =
     </div>
 
     <div class="flip-kpi-label">
-        Indexed Pages
+        Search Visible Pages (90d)
     </div>
 
 </div>
