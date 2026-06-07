@@ -135,6 +135,7 @@ function flipnzee_get_meta($post_id) {
     'cities'             => [],
     'sources'            => [],
     'keywords'           => [],
+     'indexed_pages'      => 0,
     'returning_visitors' => 0,
     'avg_duration'       => 0,
     'pages_per_user'     => 0
@@ -217,6 +218,10 @@ $organic_impressions = intval(
 $ranking_keywords = intval(
     $meta['ranking_keywords'] ?? 0
 );
+$indexed_pages = intval(
+    $meta['indexed_pages'] ?? 0
+);
+
 $avg_minutes = floor($avg_duration / 60);
 
 $avg_seconds = $avg_duration % 60;
@@ -352,6 +357,18 @@ $avg_time_display =
 <div class="flip-kpi-box">
 
     <div class="flip-kpi-value">
+        <?php echo number_format($indexed_pages); ?>
+    </div>
+
+    <div class="flip-kpi-label">
+        Indexed Pages
+    </div>
+
+</div>
+
+<div class="flip-kpi-box">
+
+    <div class="flip-kpi-value">
         <?php echo number_format($organic_impressions); ?>
     </div>
 
@@ -360,6 +377,8 @@ $avg_time_display =
     </div>
 
 </div>
+
+
 
 <div class="flip-kpi-box">
 

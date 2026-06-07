@@ -826,7 +826,7 @@ $pageviews = intval(
 $organic_clicks = 0;
 $organic_impressions = 0;
 $ranking_keywords = 0;
-
+$indexed_pages = 0;
     $site_url = get_post_meta(
         $post_id,
         '_ga_domain',
@@ -946,6 +946,59 @@ $ranking_keywords = 0;
     ];
 }
 $ranking_keywords = count($keywords);
+$page_response = wp_remote_post(
+    'https://searchconsole.googleapis.com/webmasters/v3/sites/' .
+    urlencode($site_for_api) .
+    '/searchAnalytics/query',
+
+    [
+        'headers' => [
+            'Authorization' => 'Bearer ' . $access_token,
+            'Content-Type'  => 'application/json'
+        ],
+
+        'body' => wp_json_encode([
+
+            'startDate' => date(
+                'Y-m-d',
+                strtotime('-90 days')
+            ),
+
+            'endDate' => date('Y-m-d'),
+
+            'dimensions' => ['page'],
+
+            'rowLimit' => 25000,
+
+            'searchType' => 'web'
+        ]),
+
+        'timeout' => 20
+    ]
+);
+
+if (
+    !is_wp_error($page_response) &&
+    wp_remote_retrieve_response_code($page_response) === 200
+) {
+
+    $page_data = json_decode(
+        wp_remote_retrieve_body($page_response),
+        true
+    );
+
+    $indexed_pages = count(
+        $page_data['rows'] ?? []
+    );
+    file_put_contents(
+    '/tmp/flipnzee-debug.log',
+    date('Y-m-d H:i:s') .
+    ' INDEXED_PAGES=' .
+    $indexed_pages .
+    PHP_EOL,
+    FILE_APPEND
+);
+}
 file_put_contents(
     '/tmp/flipnzee-debug.log',
     date('Y-m-d H:i:s') .
@@ -1000,11 +1053,12 @@ file_put_contents(
         'sources'              => $sources,
         'keywords'             => $keywords,
 
-        'organic_clicks'       => $organic_clicks,
-        'organic_impressions'  => $organic_impressions,
-        'ranking_keywords'     => $ranking_keywords,
+       'organic_clicks'       => $organic_clicks,
+'organic_impressions'  => $organic_impressions,
+'ranking_keywords'     => $ranking_keywords,
+'indexed_pages'        => $indexed_pages,
 
-        'returning_visitors'   => $returning_visitors,
+'returning_visitors'   => $returning_visitors,
         'avg_duration'         => $avg_duration,
         'pages_per_user'       => $pages_per_user
     ],
