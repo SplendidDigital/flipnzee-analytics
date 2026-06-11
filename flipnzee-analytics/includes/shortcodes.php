@@ -84,7 +84,7 @@ function flipnzee_get_meta($post_id) {
     // Unique transient key
     $cache_key = "flipnzee_meta_{$post_id}";
 
-    $meta = false;
+    $meta = get_transient($cache_key);
 
     // ONLY fetch if transient missing
     if ($meta === false) {
@@ -723,18 +723,183 @@ if (is_admin() && defined('REST_REQUEST') && REST_REQUEST) {
         $items[] = $post;
     }
 
-    usort($items, function ($a, $b) {
+   $sort = sanitize_text_field(
+    $_GET['sort'] ?? 'users'
+);
 
-        return ($b->flip_stats['users'] ?? 0)
+echo '<!-- SORT=' . esc_html($sort) . ' -->';
+
+switch ($sort) {
+
+    case 'growth':
+
+        usort($items, function ($a, $b) {
+
+            return ($b->flip_stats['trend_percent'] ?? 0)
+                <=>
+                ($a->flip_stats['trend_percent'] ?? 0);
+
+        });
+
+        break;
+
+    case 'keywords':
+
+        usort($items, function ($a, $b) {
+
+            return intval(
+                get_post_meta(
+                    $b->ID,
+                    '_flip_keywords',
+                    true
+                )
+            )
             <=>
-            ($a->flip_stats['users'] ?? 0);
+            intval(
+                get_post_meta(
+                    $a->ID,
+                    '_flip_keywords',
+                    true
+                )
+            );
 
-    });
+        });
+
+        break;
+
+    case 'clicks':
+
+        usort($items, function ($a, $b) {
+
+            return intval(
+                get_post_meta(
+                    $b->ID,
+                    '_flip_clicks',
+                    true
+                )
+            )
+            <=>
+            intval(
+                get_post_meta(
+                    $a->ID,
+                    '_flip_clicks',
+                    true
+                )
+            );
+
+        });
+
+        break;
+
+    case 'impressions':
+
+        usort($items, function ($a, $b) {
+
+            return intval(
+                get_post_meta(
+                    $b->ID,
+                    '_flip_impressions',
+                    true
+                )
+            )
+            <=>
+            intval(
+                get_post_meta(
+                    $a->ID,
+                    '_flip_impressions',
+                    true
+                )
+            );
+
+        });
+
+        break;
+
+    case 'indexed_pages':
+
+        usort($items, function ($a, $b) {
+
+            return intval(
+                get_post_meta(
+                    $b->ID,
+                    '_flip_indexed_pages',
+                    true
+                )
+            )
+            <=>
+            intval(
+                get_post_meta(
+                    $a->ID,
+                    '_flip_indexed_pages',
+                    true
+                )
+            );
+
+        });
+
+        break;
+
+    default:
+
+        usort($items, function ($a, $b) {
+
+            return ($b->flip_stats['users'] ?? 0)
+                <=>
+                ($a->flip_stats['users'] ?? 0);
+
+        });
+
+}
 
     ob_start();
 
 ?>
 
+<form method="get" style="margin-bottom:20px;">
+
+    <label>
+        <strong>Sort By:</strong>
+    </label>
+
+    <select
+        name="sort"
+        onchange="this.form.submit();"
+        style="margin-left:10px;padding:6px;"
+    >
+
+        <option value="users"
+            <?php selected($sort, 'users'); ?>>
+            Users
+        </option>
+
+        <option value="growth"
+            <?php selected($sort, 'growth'); ?>>
+            Growth
+        </option>
+
+        <option value="keywords"
+            <?php selected($sort, 'keywords'); ?>>
+            Ranking Keywords
+        </option>
+
+        <option value="clicks"
+            <?php selected($sort, 'clicks'); ?>>
+            Organic Clicks
+        </option>
+
+        <option value="impressions"
+            <?php selected($sort, 'impressions'); ?>>
+            Google Impressions
+        </option>
+
+        <option value="indexed_pages"
+            <?php selected($sort, 'indexed_pages'); ?>>
+            Search Visible Pages (90d)
+        </option>
+
+    </select>
+
+</form>
 <div class="flip-grid">
 
 <?php $rank = 1; ?>
