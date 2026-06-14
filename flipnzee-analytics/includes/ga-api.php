@@ -262,14 +262,12 @@ function flipnzee_fetch_and_store($property_id, $post_id) {
 
     if (!$access_token) {
 
-        set_transient(
-            "flipnzee_main_{$post_id}",
-            flipnzee_empty_response(),
-            HOUR_IN_SECONDS
-        );
+    error_log(
+        "FLIPNZEE: Access token unavailable. Keeping previous cache for post {$post_id}"
+    );
 
-        return;
-    }
+    return;
+}
 
     $endpoint =
         "https://analyticsdata.googleapis.com/v1beta/properties/{$property_id}:runReport";
@@ -298,16 +296,14 @@ function flipnzee_fetch_and_store($property_id, $post_id) {
    
    
 
-    if (!$data_current) {
+  if (!$data_current) {
 
-        set_transient(
-            "flipnzee_main_{$post_id}",
-            flipnzee_empty_response(),
-            HOUR_IN_SECONDS
-        );
+    error_log(
+        "FLIPNZEE: Empty response from GA API. Keeping previous cache for post {$post_id}"
+    );
 
-        return;
-    }
+    return;
+}
 
 
 
@@ -318,33 +314,29 @@ function flipnzee_fetch_and_store($property_id, $post_id) {
             print_r($data_current['error'], true)
         );
 
-        set_transient(
-            "flipnzee_main_{$post_id}",
-            flipnzee_empty_response(),
-            HOUR_IN_SECONDS
-        );
+            error_log(
+        "FLIPNZEE: GA API error. Keeping previous cache for post {$post_id}"
+    );
 
-        return;
+    return;
     }
 
     if (
-        empty($data_current['rows']) ||
-        !isset($data_current['rows'][0]['metricValues'][0]['value'])
-    ) {
+    empty($data_current['rows']) ||
+    !isset($data_current['rows'][0]['metricValues'][0]['value'])
+) {
 
-        error_log(
-            'FLIPNZEE ERROR: Invalid GA response for property ID: ' .
-            $property_id
-        );
+    error_log(
+        'FLIPNZEE ERROR: Invalid GA response for property ID: ' .
+        $property_id
+    );
 
-        set_transient(
-            "flipnzee_main_{$post_id}",
-            flipnzee_empty_response(),
-            HOUR_IN_SECONDS
-        );
+    error_log(
+        "FLIPNZEE: Invalid GA response. Keeping previous cache for post {$post_id}"
+    );
 
-        return;
-    }
+    return;
+}
 
     $users = intval(
         $data_current['rows'][0]['metricValues'][0]['value'] ?? 0

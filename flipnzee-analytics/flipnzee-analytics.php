@@ -3,7 +3,7 @@
 /*
 Plugin Name: Flipnzee Analytics
 Description: GA Verified Traffic + Insights
-Version: 2.9
+Version: 2.9.2
 Author: Flipnzee
 */
 

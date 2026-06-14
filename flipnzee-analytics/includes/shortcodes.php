@@ -432,21 +432,18 @@ $avg_time_display =
         </div>
 
     </div>
+<div class="flip-kpi-label">
 
+    Last successful update:
+    <?php
+    echo human_time_diff(
+        $stats['updated'],
+        current_time('timestamp')
+    );
+    ?>
+    ago
 
-    <div class="flip-kpi-label">
-
-        Updated
-        <?php
-        echo human_time_diff(
-            $stats['updated'],
-            current_time('timestamp')
-        );
-        ?>
-        ago
-
-    </div>
-
+</div>
     <?php if (!empty($recent['cities_24h'])) : ?>
 
 <div class="flip-section">
