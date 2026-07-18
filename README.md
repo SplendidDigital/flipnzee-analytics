@@ -8,32 +8,22 @@ Designed for website owners, agencies, digital publishers, and online marketplac
 
 ---
 
-**Highlights**
-
-- 📊 Google Analytics 4 Integration
-- 🔍 Google Search Console Integration
-- 🌍 Geographic Visitor Insights
-- 📈 Organic Search Performance
-- ⚡ Intelligent Data Caching
-- 🧩 WordPress Shortcode Support
-- 🛡️ Secure API-Based Architecture
-- 💻 Open Source (GPL-2.0)
-
----
-
----
-
 # Why Flipnzee Analytics?
 
-Understanding a website's performance is essential for website owners, advertisers, investors, agencies, and potential buyers. While numerous online services attempt to estimate website traffic, these estimates often rely on external data sources and can vary significantly from actual website performance.
+Understanding a website's performance is essential for website owners, advertisers, investors, agencies, and potential buyers. While many online services estimate website traffic using external datasets, Flipnzee Analytics retrieves data directly from your own Google Analytics 4 and Google Search Console properties.
 
-Flipnzee Analytics was built to solve this problem by displaying **verified first-party analytics** directly from your own Google Analytics 4 and Google Search Console properties.
+By sharing verified first-party analytics, website owners can demonstrate transparency and build trust with visitors, clients, advertisers, or prospective buyers.
 
-Instead of presenting estimated traffic, the plugin allows you to selectively share authentic website metrics with your audience, helping build transparency, credibility, and trust.
+### Perfect for
 
-Whether you're showcasing your business website, presenting a client portfolio, or listing a website for sale, Flipnzee Analytics makes it possible to demonstrate real performance using data that belongs to you.
-
----
+- 🌐 Website owners
+- 💼 Agencies
+- 📈 SEO professionals
+- 🛒 Website marketplaces
+- 💰 Website brokers
+- 📊 Affiliate marketers
+- 🚀 SaaS founders
+- 📂 Portfolio websites
 
 ---
 
@@ -54,192 +44,131 @@ Whether you're showcasing your business website, presenting a client portfolio, 
 - Search Impressions
 - Indexed Pages
 
-## 🌎 Geographic Insights
+## 🌍 Geographic Insights
 
 - Top Countries
 - Top Cities
 
-## ⚙️ Performance
+## ⚡ Performance
 
-- Intelligent Analytics Caching
-- Secure Google API Integration
-- Optimized API Requests
+- Intelligent caching
+- Optimized Google API requests
+- Secure authentication
 
 ## 🧩 WordPress Integration
 
-- Simple Shortcodes
-- Responsive Frontend Widgets
-- Easy Administration
-- Object-Oriented Architecture
-
-## 🚀 Designed For
-
-- Website Marketplaces
-- Website Brokers
-- Agencies
-- Portfolio Websites
-- Digital Asset Listings
-- Public Analytics Dashboards
+- Responsive frontend widgets
+- Simple shortcode support
+- Easy administration
+- Object-oriented architecture
 
 ---
 
-# Ideal Use Cases
+# 📸 Screenshots
 
-Flipnzee Analytics is suitable for:
+> Screenshots will be added in future releases.
 
-- Website marketplaces
-- Website brokers
-- Domain marketplaces
-- SaaS listings
-- Affiliate websites
-- Portfolio websites
-- Agencies
-- Digital asset marketplaces
-- Public analytics dashboards
-- Business websites
+| Dashboard | Search Console |
+|-----------|----------------|
+| Coming Soon | Coming Soon |
+
+| Geographic Insights | Frontend Analytics |
+|----------------------|--------------------|
+| Coming Soon | Coming Soon |
 
 ---
 
-# Why First-Party Analytics?
-
-Many online services estimate website traffic using external data sources.
-
-Flipnzee Analytics displays analytics directly from your own Google account, allowing visitors to view authentic, verified data instead of estimates.
-
-This helps build transparency and trust.
-
----
-
-# Technology Stack
-
-- WordPress
-- PHP
-- Google Analytics Data API
-- Google Search Console API
-- HTML
-- CSS
-- JavaScript
-- Object-Oriented PHP
-
----
-
-# Current Capabilities
-
-The plugin currently supports displaying:
-
-- Users
-- Sessions
-- New Users
-- Average Session Duration
-- Page Views
-- Countries
-- Cities
-- Organic Keywords
-- Search Clicks
-- Search Impressions
-- Indexed Pages
-- Cached Analytics
-- Public Analytics Dashboard
-
----
-
-# Architecture
+# 🏗 Architecture
 
 ```
 Google Analytics 4
-          │
-          ▼
+        │
+        ▼
  Google Analytics API
-          │
-          ▼
-Flipnzee Analytics
-          │
- ┌────────────────────┐
- │ API Layer          │
- │ Cache Layer        │
- │ Data Processing    │
- │ Shortcodes         │
- │ Admin Settings     │
- │ Frontend Widgets   │
- └────────────────────┘
-          │
-          ▼
+        │
+        ▼
+Google Search Console
+        │
+        ▼
+──────────────────────────
+ Flipnzee Analytics
+──────────────────────────
+  • API Layer
+  • Cache Layer
+  • Data Processing
+  • Shortcodes
+  • Admin Settings
+  • Frontend Widgets
+──────────────────────────
+        │
+        ▼
  WordPress Website
-          │
-          ▼
+        │
+        ▼
  Website Visitors
 ```
 
 ---
 
-# Installation
+# 🚀 Installation
 
 1. Download the latest release.
 2. Upload the plugin to your WordPress installation.
 3. Activate the plugin.
-4. Configure your Google Analytics credentials.
+4. Configure Google Analytics 4 credentials.
 5. Configure Google Search Console.
-6. Add the provided shortcodes to any page.
+6. Insert the provided shortcode into any page.
 7. Start displaying verified analytics.
 
 ---
 
-# Project Status
+# 🛣 Roadmap
 
-Flipnzee Analytics is under active development.
+### Completed
 
-The project continues to receive improvements, bug fixes, performance enhancements, and new integrations.
+- ✅ Google Analytics 4 Integration
+- ✅ Google Search Console Integration
+- ✅ Public Analytics Dashboard
+- ✅ Responsive Frontend
+- ✅ Intelligent Caching
+- ✅ Object-Oriented Refactoring
 
----
+### Planned
 
-# Roadmap
-
-Completed
-
-- Google Analytics 4 Integration
-- Google Search Console Integration
-- Analytics Dashboard
-- Public Shortcodes
-- Caching Layer
-- Responsive Frontend
-- Object-Oriented Refactoring
-
-Planned
-
-- Bing Webmaster integration
-- Historical comparison charts
-- Gutenberg blocks
-- REST API endpoints
-- Additional analytics widgets
-- More customization options
+- ⏳ Historical comparison charts
+- ⏳ Gutenberg Blocks
+- ⏳ REST API
+- ⏳ Additional widgets
+- ⏳ Bing Webmaster integration
+- ⏳ More customization options
 
 ---
 
-# Contributing
+# 🤝 Contributing
 
-Contributions, bug reports, feature requests, and suggestions are welcome.
+Contributions are welcome.
+
+Whether you would like to report a bug, suggest a feature, improve documentation, or submit code, your participation is appreciated.
 
 Please open an Issue or submit a Pull Request.
 
-The project follows WordPress Coding Standards and emphasizes clean, maintainable, and well-documented code.
+---
+
+# 📜 License
+
+This project is licensed under the **GNU General Public License v2.0 or later (GPL-2.0)**.
 
 ---
 
-# License
+# 🌐 Part of the Flipnzee Ecosystem
 
-This project is licensed under the GNU General Public License v2.0 or later (GPL-2.0).
+Flipnzee Analytics is one of the open-source projects developed under the **Flipnzee** ecosystem for evaluating, buying, selling, and managing digital assets.
 
----
+Related Projects
 
-# About Flipnzee
-
-Flipnzee Analytics is part of the broader **Flipnzee ecosystem**, an open-source initiative focused on building transparent tools for evaluating, buying, and selling digital assets.
-
-Related projects include:
-
-- Flipnzee Auctions
-- WPNzee
-- Digital Splendid
+- **Flipnzee Auctions** – Digital asset auction platform
+- **WPNzee** – WordPress engineering tutorials and documentation
+- **Digital Splendid** – Open-source and WordPress solutions
 
 ---
 
@@ -247,7 +176,7 @@ Related projects include:
 
 **Splendid Digital**
 
-Building practical open-source solutions for WordPress, digital assets, and website marketplaces.
+Building practical open-source solutions for WordPress and digital asset marketplaces.
 
 GitHub:
 https://github.com/SplendidDigital
