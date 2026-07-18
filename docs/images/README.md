@@ -19,7 +19,7 @@ docs/
     └── frontend-widget.png
 ```
 
-### Description
+## Image Reference
 
 | File | Purpose |
 |------|---------|
