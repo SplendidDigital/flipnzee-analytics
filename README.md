@@ -1,10 +1,24 @@
 # Flipnzee Analytics
+# Flipnzee Analytics
 
-> **Transparent Website Analytics for WordPress**
+### Transparent Website Analytics for WordPress
 
-Flipnzee Analytics is an open-source WordPress plugin that securely connects with **Google Analytics 4** and **Google Search Console** to display verified website analytics directly on your WordPress website.
+Display verified Google Analytics 4 and Google Search Console insights directly on your WordPress website using secure first-party data.
 
-Unlike traditional analytics plugins that are intended only for website owners, Flipnzee Analytics is designed to selectively share first-party analytics with visitors, making it ideal for website marketplaces, digital asset listings, portfolio websites, agencies, and businesses that value transparency.
+Flipnzee Analytics is an open-source WordPress plugin that helps website owners selectively share authentic website analytics with visitors, advertisers, investors, and potential buyers. Instead of relying on third-party traffic estimates, the plugin connects directly to your own Google Analytics and Google Search Console properties to present trusted, verifiable insights.
+
+---
+
+**Highlights**
+
+- 📊 Google Analytics 4 Integration
+- 🔍 Google Search Console Integration
+- 🌍 Geographic Visitor Insights
+- 📈 Organic Search Performance
+- ⚡ Intelligent Data Caching
+- 🧩 WordPress Shortcode Support
+- 🛡️ Secure API-Based Architecture
+- 💻 Open Source (GPL-2.0)
 
 ---
 
