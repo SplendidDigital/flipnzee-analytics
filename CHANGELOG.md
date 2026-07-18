@@ -7,6 +7,8 @@ and this project follows [Semantic Versioning](https://semver.org/) where practi
 
 ---
 
+This changelog documents user-visible features, fixes, and significant internal improvements. Minor refactoring and documentation-only updates may not appear here.
+
 ## [Unreleased]
 
 Changes currently under development for the next stable release.
