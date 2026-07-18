@@ -1,10 +1,19 @@
 # Changelog
 
-All notable changes to **Flipnzee Analytics** are documented in this file.
+All notable changes to **Flipnzee Analytics** will be documented in this file.
 
-The project follows [Semantic Versioning](https://semver.org/) where practical, and release history is maintained through GitHub Releases and Git tags.
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
+and this project follows [Semantic Versioning](https://semver.org/) where practical.
 
 ---
+
+## [Unreleased]
+
+### Added
+
+### Changed
+
+### Fixed
 
 ## [2.9.2] - 2026-06-14
 
