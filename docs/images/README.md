@@ -1,11 +1,17 @@
 # Documentation Images
 
-This directory contains images used by the GitHub repository documentation.
+This directory contains images used throughout the Flipnzee Analytics GitHub repository, including the README, project documentation, GitHub Social Preview, architecture diagrams, screenshots, and promotional materials.
 
-## Files
+These assets are maintained separately from the WordPress plugin to keep documentation resources independent of the plugin source code.
+## Directory Structure
 
-- `github-banner.png` – Banner displayed at the top of the repository README.
-- `marketing-banner.png` – Promotional artwork for documentation and articles.
-- `social-preview.png` – GitHub Social Preview image.
-
-These images are **not part of the WordPress plugin**. They are used only for GitHub documentation, project pages, blog posts, and promotional materials.
+docs/
+└── images/
+    ├── flipnzee-analytics-github-banner.png
+    ├── flipnzee-analytics-marketing-banner.png
+    ├── flipnzee-analytics-social-preview.png
+    ├── architecture-diagram.png      ← we'll create this
+    ├── dashboard-overview.png        ← screenshot
+    ├── search-console.png            ← screenshot
+    ├── countries.png                 ← screenshot
+    └── frontend-widget.png           ← screenshot
