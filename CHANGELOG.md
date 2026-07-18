@@ -9,12 +9,13 @@ and this project follows [Semantic Versioning](https://semver.org/) where practi
 
 ## [Unreleased]
 
+Changes currently under development for the next stable release.
+
 ### Added
 
 ### Changed
 
 ### Fixed
-
 ## [2.9.2] - 2026-06-14
 
 ### Improved
@@ -98,3 +99,8 @@ Upcoming releases may include:
 - Performance enhancements
 - Additional visualization components
 - Developer APIs
+
+[Unreleased]: https://github.com/SplendidDigital/flipnzee-analytics/compare/v2.9.2...HEAD
+[2.9.2]: https://github.com/SplendidDigital/flipnzee-analytics/releases/tag/v2.9.2
+[2.9.1]: https://github.com/SplendidDigital/flipnzee-analytics/releases/tag/v2.9.1
+[2.9.0]: https://github.com/SplendidDigital/flipnzee-analytics/releases/tag/v2.9.0
